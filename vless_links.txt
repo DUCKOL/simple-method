@@ -1,1 +1,1 @@
-vless://2e24b381-09e5-4386-b8c2-033c1bc40b12@russia.com:443?encryption=none&security=tls&sni=russia.com&type=ws&host=russia.com&path=/%3Fed%3D2560#%40ys%3D%3D%3Eunlock%20all%20russia.com
+vless://2e24b381-09e5-4386-b8c2-033c1bc40b12@sub1.yourdomain.com:443?encryption=none&security=tls&sni=sub1.yourdomain.com&type=ws&host=sub1.yourdomain.com&path=/%3Fed%3D2560#%40ys%3D%3D%3Eunlock%20all%20sub1.yourdomain.com
