@@ -3,14 +3,9 @@ name: Auto-Generate VLESS from domains.txt
 
 # 触发工作流的条件
 on:
-  # 定时任务: 每6小时运行一次
   schedule:
     - cron: '0 */6 * * *'
-    
-  # 允许在 GitHub Actions 页面手动触发
   workflow_dispatch:
-  
-  # 当域名列表或相关脚本被修改并推送到仓库时触发
   push:
     paths:
       - '.github/workflows/main.yml'
@@ -20,44 +15,33 @@ on:
 # 定义工作任务
 jobs:
   build-and-commit:
-    # 指定运行环境
     runs-on: ubuntu-latest
     
-    # 关键修复：添加权限设置，允许 Actions 将更改推送回仓库
+    # 包含了权限修复，解决 "Permission Denied" 错误
     permissions:
       contents: write
 
-    # 任务步骤
     steps:
-      # 步骤 1: 检出（下载）你的仓库代码
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 步骤 2: 设置 Python 3.9 环境
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # 步骤 3: 运行主脚本 (从 domains.txt 生成链接)
-      - name: Run Python script to generate links
+      # 关键：这里使用了正确的脚本名 "generate_from_domains.py"
+      - name: Run Python script to generate link
         run: python generate_from_domains.py
 
-      # 步骤 4: 提交并推送生成的订阅文件
       - name: Commit and Push new subscription file
         run: |
-          # 配置 git 的用户名和邮箱
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions-bot@github.com"
-          
-          # 将最终生成的 vless_links.txt 文件添加到暂存区
           git add vless_links.txt
-          
-          # 检查文件是否有实际变化，以避免在内容相同时创建空的提交
           if git diff --staged --quiet; then
-            echo "✅ Subscription file is already up-to-date. No commit needed."
+            echo "Subscription file is already up-to-date. No commit needed."
           else
-            # 如果文件内容已更新，则创建提交并推送到仓库
-            git commit -m "🚀 Auto-update VLESS subscription from domains.txt"
+            git commit -m "🚀 Auto-update VLESS subscription"
             git push
           fi
