@@ -1,64 +1,66 @@
 # 工作流名称
-name: Generate VLESS Nodes with Random Hosts
+name: Auto-Generate and Overwrite VLESS Subscription
 
 # 触发工作流的条件
 on:
-  # 定时任务: 每6小时运行一次
+  # 1. 定时任务: 每 6 小时运行一次
   schedule:
     - cron: '0 */6 * * *'
     
-  # 允许手动触发
+  # 2. 允许在 GitHub Actions 页面手动触发
   workflow_dispatch:
   
-  # 当相关文件被修改并推送时触发
+  # 3. 当核心文件被修改并推送到仓库时触发 (可选，方便调试)
   push:
     paths:
-      - '.github/workflows/**'
-      - 'generate_nodes.py' # 注意脚本文件名已更改
-      - 'domains.txt'
+      - '.github/workflows/main.yml'
+      - 'collect_and_generate.py'
 
 # 定义工作任务
 jobs:
   build-and-commit:
-    # 运行环境
+    # 指定运行环境为最新的 Ubuntu
     runs-on: ubuntu-latest
 
     # 任务步骤
     steps:
-      # 步骤1: 检出（下载）你的仓库代码
+      # 步骤 1: 检出（下载）你的仓库代码到 Actions runner 中
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 步骤2: 设置 Python 环境
+      # 步骤 2: 设置 Python 3.9 环境
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # 步骤3: 安装 Python 依赖包
+      # 步骤 3: 安装脚本所需的 Python 依赖包
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
 
-      # 步骤4: 运行主脚本 (抓取IP、读取域名、生成链接)
-      - name: Run Python script to generate nodes
-        run: python generate_nodes.py
+      # 步骤 4: 运行主脚本 (抓取 IP 并生成 VLESS 链接)
+      # 我们将脚本重命名为更清晰的名称
+      - name: Run Python script to generate links
+        run: python collect_and_generate.py
 
-      # 步骤5: 提交并推送生成的订阅文件
-      - name: Commit and Push Subscription File
+      # 步骤 5: 将生成的新文件提交并推送到仓库
+      - name: Commit and Push new subscription file
         run: |
+          # 配置 git 的用户名和邮箱
           git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
+          git config --global user.email "actions-bot@github.com"
           
-          # 添加最终生成的 vless_links.txt 文件
+          # 将最终生成的 vless_links.txt 文件添加到暂存区
+          # 如果文件不存在或内容没有变化，此命令不会报错
           git add vless_links.txt
           
-          # 检查文件是否有实际变化
+          # 检查文件是否有实际变化，以避免在内容相同时创建空的提交
           if git diff --staged --quiet; then
-            echo "Subscription file is already up-to-date. No commit needed."
+            echo "✅ Subscription file is already up-to-date. No commit needed."
           else
-            # 如果文件内容已更新，则创建提交并推送到仓库
-            git commit -m "🚀 Auto-update nodes with live IPs and random hosts"
+            # 如果文件内容已更新，则创建提交并强制推送到仓库
+            git commit -m "🚀 Auto-update VLESS subscription file"
             git push
           fi
