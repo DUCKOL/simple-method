@@ -1,0 +1,64 @@
+# 工作流名称
+name: Generate VLESS Nodes with Random Hosts
+
+# 触发工作流的条件
+on:
+  # 定时任务: 每6小时运行一次
+  schedule:
+    - cron: '0 */6 * * *'
+    
+  # 允许手动触发
+  workflow_dispatch:
+  
+  # 当相关文件被修改并推送时触发
+  push:
+    paths:
+      - '.github/workflows/**'
+      - 'generate_nodes.py' # 注意脚本文件名已更改
+      - 'domains.txt'
+
+# 定义工作任务
+jobs:
+  build-and-commit:
+    # 运行环境
+    runs-on: ubuntu-latest
+
+    # 任务步骤
+    steps:
+      # 步骤1: 检出（下载）你的仓库代码
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 步骤2: 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # 步骤3: 安装 Python 依赖包
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      # 步骤4: 运行主脚本 (抓取IP、读取域名、生成链接)
+      - name: Run Python script to generate nodes
+        run: python generate_nodes.py
+
+      # 步骤5: 提交并推送生成的订阅文件
+      - name: Commit and Push Subscription File
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # 添加最终生成的 vless_links.txt 文件
+          git add vless_links.txt
+          
+          # 检查文件是否有实际变化
+          if git diff --staged --quiet; then
+            echo "Subscription file is already up-to-date. No commit needed."
+          else
+            # 如果文件内容已更新，则创建提交并推送到仓库
+            git commit -m "🚀 Auto-update nodes with live IPs and random hosts"
+            git push
+          fi
