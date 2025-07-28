@@ -40,7 +40,7 @@ jobs:
           git config --global user.email "actions-bot@github.com"
           git add vless_links.txt
           if git diff --staged --quiet; then
-            echo "Subscription file is already up-to-date. No commit needed."
+            echo "✅ Subscription file is already up-to-date. No commit needed."
           else
             git commit -m "🚀 Auto-update VLESS subscription"
             git push
