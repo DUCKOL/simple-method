@@ -1,23 +1,23 @@
-# 工作流名称
-name: Auto-Generate VLESS from domains.txt
+# 新的工作流名称
+name: Create VLESS Link
 
-# 触发工作流的条件
+# 触发条件
 on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/main.yml'
-      - 'generate_from_domains.py'
+      - '.github/workflows/run.yml' # <-- 新文件名
+      - 'create_links.py'          # <-- 新文件名
       - 'domains.txt'
 
-# 定义工作任务
+# 任务定义
 jobs:
-  build-and-commit:
+  build:
     runs-on: ubuntu-latest
     
-    # 包含了权限修复，解决 "Permission Denied" 错误
+    # 必须有这个权限设置
     permissions:
       contents: write
 
@@ -30,18 +30,18 @@ jobs:
         with:
           python-version: '3.9'
 
-      # 关键：这里使用了正确的脚本名 "generate_from_domains.py"
-      - name: Run Python script to generate link
-        run: python generate_from_domains.py
+      # 关键：运行我们新的脚本 "create_links.py"
+      - name: Generate single link
+        run: python create_links.py
 
-      - name: Commit and Push new subscription file
+      - name: Commit and Push result
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions-bot@github.com"
           git add vless_links.txt
           if git diff --staged --quiet; then
-            echo "✅ Subscription file is already up-to-date. No commit needed."
+            echo "✅ No changes to commit."
           else
-            git commit -m "🚀 Auto-update VLESS subscription"
+            git commit -m "🚀 Auto-update VLESS link"
             git push
           fi
