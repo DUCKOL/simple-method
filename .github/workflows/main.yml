@@ -3,25 +3,29 @@ name: Auto-Generate VLESS from domains.txt
 
 # 触发工作流的条件
 on:
-  # 1. 定时任务: 每 6 小时运行一次 (您可以按需修改)
+  # 定时任务: 每6小时运行一次
   schedule:
     - cron: '0 */6 * * *'
     
-  # 2. 允许在 GitHub Actions 页面手动触发
+  # 允许在 GitHub Actions 页面手动触发
   workflow_dispatch:
   
-  # 3. 当域名列表或脚本本身被修改并推送到仓库时触发
+  # 当域名列表或相关脚本被修改并推送到仓库时触发
   push:
     paths:
       - '.github/workflows/main.yml'
       - 'generate_from_domains.py'
-      - 'domains.txt' # <-- 关键：当您修改域名列表时，会自动触发更新
+      - 'domains.txt'
 
 # 定义工作任务
 jobs:
   build-and-commit:
     # 指定运行环境
     runs-on: ubuntu-latest
+    
+    # 关键修复：添加权限设置，允许 Actions 将更改推送回仓库
+    permissions:
+      contents: write
 
     # 任务步骤
     steps:
@@ -29,7 +33,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 步骤 2: 设置 Python 环境
+      # 步骤 2: 设置 Python 3.9 环境
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -42,12 +46,14 @@ jobs:
       # 步骤 4: 提交并推送生成的订阅文件
       - name: Commit and Push new subscription file
         run: |
+          # 配置 git 的用户名和邮箱
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions-bot@github.com"
           
+          # 将最终生成的 vless_links.txt 文件添加到暂存区
           git add vless_links.txt
           
-          # 检查文件是否有实际变化，以避免空的提交记录
+          # 检查文件是否有实际变化，以避免在内容相同时创建空的提交
           if git diff --staged --quiet; then
             echo "✅ Subscription file is already up-to-date. No commit needed."
           else
